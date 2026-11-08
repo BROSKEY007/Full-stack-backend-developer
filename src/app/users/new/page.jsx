@@ -12,34 +12,42 @@ import {
   TextArea,
   TextField,
 } from "@heroui/react";
+import { useState } from 'react';
 
 const NewUserpage = () => {
+const [error, setError] = useState('');
+const onSubmit = async (event) => {
+  event.preventDefault();
+  setError('');
 
-  const onSubmit = async (event)=>{
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    const newUsers = Object.fromEntries(formData.entries());
-    console.log('new user data ', newUsers);
+  const formData = new FormData(event.target);
+  const newUsers = Object.fromEntries(formData.entries());
 
   try {
     const res = await fetch('http://localhost:8000/users/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUsers)
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newUsers),
     });
 
-    if (!res.ok) throw new Error('Failed to create user');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to create user');
 
-    const createdUsers = await res.json();
-    console.log('created user', createdUsers);
-} catch (err) {
-    console.error(err.message);
-}
+    console.log('created user', data);
+    event.target.reset();
+  } catch (err) {
+    setError(err.message);
   }
+};
     return (
-        <div>
-            <h2>Create a new user</h2>
-            <Form className="w-full max-w-96" onSubmit={onSubmit}>
+<div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-sky-100 p-4">
+  <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl ring-1 ring-black/5">
+    <h1 className="text-2xl font-bold text-indigo-900">Create a new user</h1>
+    <p className="mb-6 mt-1 text-sm text-gray-500">
+      Add a new user to your database.
+    </p>
+
+    <Form className="w-full" onSubmit={onSubmit}>
       <Fieldset>
         <Fieldset.Legend>Profile Settings</Fieldset.Legend>
         <Description>Update your profile information.</Description>
@@ -64,10 +72,17 @@ const NewUserpage = () => {
             <FieldError />
           </TextField>
         </FieldGroup>
-        <Fieldset.Actions>
+
+        {error && (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            {error}
+          </p>
+        )}
+
+        <Fieldset.Actions className="mt-4 flex gap-3">
           <Button type="submit">
             <FloppyDisk />
-            Save changes
+            Save
           </Button>
           <Button type="reset" variant="secondary">
             Cancel
@@ -75,8 +90,9 @@ const NewUserpage = () => {
         </Fieldset.Actions>
       </Fieldset>
     </Form>
-        </div>
-    );
+  </div>
+</div>
+);
 };
 
 export default NewUserpage;
